@@ -1,0 +1,842 @@
+---
+title: "R_Assignment"
+author: "Bong Xuan Jing"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+```{r}
+path <- "C:/University/Year 3 Sem 1/Statistical Programming using R/Assignment/gym_members_exercise_tracking.csv"
+data <- read.csv(path, header = TRUE, sep = ",")
+attach(data)
+
+#preprocessing
+sum(is.na(data))
+anyNA(data) 
+
+str(data)
+head(data)
+summary(data)
+
+```
+
+```{r}
+#transform Experience_Level to factor
+data$Experience_Level <- factor(data$Experience_Level, levels = 1:3, labels = c("Beginner", "Intermediate", "Expert"))
+
+#install.packages("janitor")
+library(janitor)
+data <- janitor::clean_names(data)
+names(data)
+str(data)
+```
+
+```{r}
+#install.packages("viridis")  # Install
+library("viridis")           # Load
+```
+
+
+
+```{r}
+#Basic data analysis to understand the dataset
+#2.1 Age distribution
+hist(data$age,
+     main = "Age Distribution",
+     xlab = "Age",
+     col = "lightblue",
+     border = "black",
+     breaks = 20)
+
+```
+
+
+
+
+```{r}
+#gender proportion
+gender_table <- table(data$gender)
+gender_table
+barplot(gender_table, 
+        main = "Gender Distribution", 
+        col = c("pink", "lightblue"),
+        ylab = "Count")
+
+
+pie(gender_table, 
+    main = "Gender Distribution", 
+    col = rainbow(length(gender_table)), 
+    labels = paste(names(gender_table), "\n", round(100 * gender_table/sum(gender_table), 1), "%"))
+
+```
+
+
+```{r}
+# Histogram of Session Duration
+hist(data$session_duration, 
+     main = "Workout Duration Distribution", 
+     xlab = "Hours per Session", 
+     col = "lightgreen", 
+     breaks = 20)
+```
+```{r}
+shapiro.test(data$session_duration)
+qqnorm(data$session_duration)
+qqline(data$session_duration, col = "red")
+```
+
+
+
+
+```{r}
+#Pie Chart of Workout Type
+workout_table <- table(data$workout_type)
+workout_table
+pie(workout_table, 
+    main = "Workout Type Distribution", 
+    col = rainbow(length(workout_table)), 
+    labels = paste(names(workout_table), "\n", round(100 * workout_table/sum(workout_table), 1), "%"))
+
+```
+
+
+```{r}
+#Gender and exercise type
+library(ggplot2)
+
+ggplot(data, aes(x = workout_type, fill = Gender)) +
+  geom_bar(position = "dodge") +
+  labs(title = "Workout Type by Gender", x = "Workout Type", y = "Count") +
+  theme_minimal()
+
+
+```
+
+
+
+
+```{r}
+library(ggplot2)
+
+ggplot(data, aes(x = as.factor(workout_frequency_days_week), fill = experience_level)) +
+  geom_bar(position = "dodge") +
+  labs(title = "Exercise Frequency by Experience Level", 
+       x = "Workout Frequency (days/week)", 
+       y = "Count") +
+  theme_minimal() +
+  scale_fill_viridis_d()
+
+
+```
+
+
+
+
+
+
+
+
+```{r}
+#Distribution of Workout_Frequency (days/week)
+workout_frequency_table <- table(data$workout_frequency_days_week)
+workout_frequency_table
+
+barplot(workout_frequency_table, 
+        main = "Distribution of Workout_Frequency (days/week)", 
+        col = magma(length(workout_frequency_table)), 
+        ylab = "Count")
+
+
+pie(workout_frequency_table, 
+    main = "Distribution of Workout_Frequency (days/week)", 
+    col = magma(length(workout_frequency_table)), 
+    labels = paste(names(workout_frequency_table), "\n", round(100 * workout_frequency_table/sum(workout_frequency_table), 1), "%"))
+
+```
+
+
+```{r}
+#Distribution of Experience_Level
+experience_level_table <- table(data$experience_level )
+experience_level_table
+
+barplot(experience_level_table, 
+        main = "Distribution of Experience_Level", 
+        col = viridis(length(experience_level_table)), 
+        ylab = "Count")
+
+
+pie(experience_level_table, 
+    main = "Distribution of Experience_Level", 
+    col = viridis(length(experience_level_table)), 
+    labels = paste(names(experience_level_table), "\n", round(100 * experience_level_table/sum(experience_level_table), 1), "%"))
+```
+
+```{r}
+library(e1071)  # for skewness and kurtosis
+#install.packages("psych")
+library(psych)  # for descriptive stats
+```
+
+
+
+
+```{r}
+#Central Tendency
+central_vars <- c("age", "height_m", "weight_kg", "session_duration_hours", "calories_burned", "fat_percentage", "water_intake_liters")
+
+for (v in central_vars) {
+  cat("\nVariable:", v, "\n")
+  cat("Mean:", mean(data[[v]]), "\n")
+  cat("Median:", median(data[[v]]), "\n")
+  cat("Mode:", names(which.max(table(data[[v]]))), "\n")
+  cat("Standard Deviation:", sd(data[[v]]), "\n")
+  cat("Variance:", var(data[[v]]), "\n")
+  cat("Skewness:", skewness(data[[v]]), "\n")
+  cat("Kurtosis:", kurtosis(data[[v]]), "\n")
+}
+
+
+
+```
+
+
+
+
+
+```{r}
+# Z-score for Calories_Burned
+data$z_calories <- scale(data$calories_burned)
+head(data$z_calories)
+
+# z > 2 or z < -2 Often considered an outlier
+
+```
+
+
+
+
+
+
+```{r}
+
+library(corrplot)
+
+
+num_vars <- data[, sapply(data, is.numeric)]
+
+
+cor_matrix_pearson <- cor(num_vars, use = "complete.obs", method = "pearson")
+png('C:/University/Year 3 Sem 1/Statistical Programming using R/Assignment/pearson_corrplot.png',
+    width = 1000, height = 1000)
+corrplot(cor_matrix_pearson, method = "color", type = "lower",
+         tl.col = "black", tl.cex = 1.5, addCoef.col = "black",
+         number.cex = 1.5, col = colorRampPalette(c("blue", "white", "red"))(200))
+dev.off()
+
+
+cor_matrix_spearman <- cor(num_vars, use = "complete.obs", method = "spearman")
+png('C:/University/Year 3 Sem 1/Statistical Programming using R/Assignment/spearman_corrplot.png',
+    width = 1000, height = 1000)
+corrplot(cor_matrix_spearman, method = "color", type = "lower",
+         tl.col = "black", tl.cex = 1.5, addCoef.col = "black",
+         number.cex = 1.5, col = colorRampPalette(c("blue", "white", "red"))(200))
+dev.off()
+
+
+```
+
+```{r}
+#Problem Statement Start:
+#Q1
+#add a column
+data$burns_800plus <- ifelse(data$calories_burned >= 800, 1, 0)
+p_hat <- mean(data$burns_800plus)
+p_hat   
+
+n <- 100
+# binomial compute P(X ≥ 60)
+d_binom <- sum(dbinom(60:100, size = n, prob = p_hat))
+cat("P(X ≥ 60) using Binomial:", d_binom , "\n")
+
+mu <- n * p_hat
+sigma <- sqrt(n * p_hat * (1 - p_hat))
+
+# Normal approximation P(X ≥ 60)
+p_normal <- pnorm(59.5, mean = mu, sd = sigma, lower.tail = FALSE)
+cat("P(X ≥ 60) using Normal Approximation:", p_normal , "\n")
+
+
+```
+
+```{r}
+#Q2
+population <- data$calories_burned
+population_mean <- mean(population)
+print(paste("Population Mean:", population_mean))
+
+# Plot histogram of the population
+hist(population, breaks = 30, col = "lightblue", border = "black",
+     main = "Histogram of Population Distribution",
+     xlab = "Value", ylab = "Frequency")
+
+set.seed(123)
+sample_means <- replicate(1000, {
+  sample_30 <- sample(population, 30, replace = TRUE)
+  mean(sample_30)
+})
+
+hist(sample_means, breaks = 30, col = "skyblue", border = "white",
+     freq = FALSE,   
+     main = "Sampling Distribution of the Mean",
+     xlab = "Sample Mean", ylab = "Density")
+
+curve(dnorm(x, mean = mean(sample_means), sd = sd(sample_means)),
+      col = "red", lwd = 2, add = TRUE)
+
+sample_mean <- mean(sample_means)
+print(paste("Estimate Population Means:", sample_mean))
+
+
+shapiro.test(population)
+shapiro.test(sample_means)
+
+```
+
+
+
+
+```{r}
+#Q3
+threshold <- 120
+
+# One-Sample t-Test
+t_test <- t.test(data$avg_bpm , mu = threshold, alternative = "greater")
+t_test
+
+```
+
+
+```{r}
+#Q4
+paired_test <- t.test(data$avg_bpm, data$resting_bpm, paired = TRUE)
+paired_test
+
+```
+
+
+
+```{r}
+#Q5 (two-sample t test)
+normal_BMI <- subset(data, bmi >= 18.5 & bmi <= 24.9)$avg_bpm
+high_BMI <- subset(data, bmi > 25)$avg_bpm
+
+
+shapiro_normal <- shapiro.test(normal_BMI)
+shapiro_high <- shapiro.test(high_BMI)
+shapiro_normal
+shapiro_high
+
+if (shapiro_normal$p.value > 0.05 & shapiro_high$p.value > 0.05) {
+  print("Both groups are normally distributed")
+} else {
+  print("Either one or both groups are NOT normally distributed")
+}
+
+```
+
+```{r}
+wilcox_test_result <- wilcox.test(normal_BMI, high_BMI)
+
+print(wilcox_test_result)
+
+if (wilcox_test_result$p.value < 0.05) {
+  decision <- "Reject the null hypothesis (H0)"
+} else {
+  decision <- "Fail to reject the null hypothesis (H0)"
+}
+cat("Decision: ", decision, "\n")
+```
+
+
+```{r}
+#Q6
+#Is there a significant difference in average heart rate between men and women?
+
+group_male <- data$avg_bpm[data$gender == "Male"]
+group_female <- data$avg_bpm[data$gender == "Female"]
+
+shapiro_male <- shapiro.test(group_male)
+shapiro_female <- shapiro.test(group_female)
+shapiro_male
+shapiro_female
+
+if(shapiro_male$p.value > 0.05 & shapiro_female$p.value > 0.05){
+  print("Both groups are normally distributed")
+}else{
+  print("Either one or both groups are NOT normally distributed")
+}
+
+```
+
+
+
+```{r}
+wilcox_test_result <- wilcox.test(group_male, group_female)
+
+print(wilcox_test_result)
+
+if (wilcox_test_result$p.value < 0.05) {
+  decision <- "Reject the null hypothesis (H0): Significant difference exists in average heart rate."
+} else {
+  decision <- "Fail to reject the null hypothesis (H0): No significant difference in average heart rate."
+}
+cat("Decision: ", decision, "\n")
+
+```
+
+
+```{r}
+#Q7： Do people who exercise regularly burn more calories than those who do not exercise regularly?
+# add new column
+data$regular_exercise <- ifelse(data$workout_frequency_days_week >= 4, "Regular", "Irregular")
+
+
+group_regular <- data$calories_burned[data$regular_exercise == "Regular"]
+group_irregular <- data$calories_burned[data$regular_exercise == "Irregular"]
+
+
+shapiro_reg <- shapiro.test(group_regular)
+shapiro_irreg <- shapiro.test(group_irregular)
+shapiro_reg
+shapiro_irreg
+
+if (shapiro_reg$p.value > 0.05 & shapiro_irreg$p.value > 0.05) {
+  print("Both groups are normally distributed")
+} else {
+  print("Either one or both groups are NOT normally distributed")
+}
+```
+
+
+```{r}
+# Wilcoxon Rank-Sum Test (Mann-Whitney U Test)
+wilcox_test_result <- wilcox.test(group_regular, group_irregular)
+print(wilcox_test_result)
+
+if (wilcox_test_result$p.value < 0.05) {
+  decision <- "Reject the null hypothesis (H0)"
+} else {
+  decision <- "Fail to reject the null hypothesis (H0)"
+}
+cat("Decision: ", decision, "\n")
+
+```
+
+
+
+
+
+
+```{r}
+#Q8
+#Confidence Intervals for Population mean of fat percentage
+# Male
+male_data <- subset(data, gender == "Male")
+n <- nrow(male_data)
+sample_mean <- mean(male_data$fat_percentage)
+sample_sd <- sd(male_data$fat_percentage)
+
+alpha <- 0.05
+df <- n - 1
+t_critical <- qt(1 - alpha/2, df)
+
+lower_bound <- sample_mean - (t_critical * (sample_sd / sqrt(n)))
+upper_bound <- sample_mean + (t_critical * (sample_sd / sqrt(n)))
+cat("The 95% confidence interval for the population mean of fat percentage of male is between", 
+    round(lower_bound, 2), "and", round(upper_bound, 2), "%.\n")
+
+
+# Female
+female_data <- subset(data, gender == "Female")
+n <- nrow(female_data)
+sample_mean <- mean(female_data$fat_percentage)
+sample_sd <- sd(female_data$fat_percentage)
+
+alpha <- 0.05
+df <- n - 1
+t_critical <- qt(1 - alpha/2, df)
+
+lower_bound <- sample_mean - (t_critical * (sample_sd / sqrt(n)))
+upper_bound <- sample_mean + (t_critical * (sample_sd / sqrt(n)))
+cat("The 95% confidence interval for the population mean of fat percentage of female is between", 
+    round(lower_bound, 2), "and", round(upper_bound, 2), "%.\n")
+```
+
+
+
+
+```{r}
+#Q9
+#Confidence Intervals for Population Proportions of members with healthy BMI
+n <- nrow(data)
+X <- sum(data$bmi >= 18.5 & data$bmi <= 25)
+#p_hat
+sample_proportion <- X/n
+
+alpha <- 0.05
+z_critical <- qnorm(1 - alpha/2)
+
+standard_error <- sqrt((sample_proportion * (1-sample_proportion)) / n)
+lower_bound <- sample_proportion - (z_critical * standard_error)
+upper_bound <- sample_proportion + (z_critical * standard_error)
+
+cat("The 95% confidence interval for the population proportion of members with healthy BMI is between", 
+    round(lower_bound, 4) * 100, "and", round(upper_bound, 4) * 100, "%.\n")
+
+```
+
+
+```{r}
+n*sample_proportion
+n*(1 - sample_proportion)
+```
+
+
+
+
+```{r}
+#Q10
+#One-Way ANOVA
+#Examine whether there is a significant difference in the BMI by different workout frequency (2, 3, 4, 5 days / week). 
+
+library(car)
+data$workout_frequency_days_week <- as.factor(data$workout_frequency_days_week)
+
+
+#Shapiro-Wilk
+shapiro_results <- by(data$bmi, data$workout_frequency_days_week, shapiro.test)
+shapiro_results
+
+#Levene's Test
+levene_test <- leveneTest(bmi ~ workout_frequency_days_week, data = data)
+levene_test
+```
+
+```{r}
+# Kruskal-Wallis Test
+kruskal_result <- kruskal.test(bmi ~ workout_frequency_days_week, data = data)
+kruskal_result
+
+```
+```{r}
+boxplot(bmi ~ workout_frequency_days_week, data = data,
+        main = "BMI by workout frequency",
+        xlab = "Workout Frequency",
+        ylab = "BMI",
+        col = c("lightblue", "lightgreen", "lightpink", "lightyellow"))
+
+
+points(1:length(levels(data$workout_frequency_days_week)),
+       tapply(data$bmi, data$workout_frequency_days_week, median),
+       col = "red", pch = 19)
+
+```
+
+
+
+
+
+
+```{r}
+#Q11
+#One-Way ANOVA
+
+library(car)
+data$workout_type <- as.factor(data$workout_type)
+
+
+#Shapiro-Wilk
+shapiro_results <- by(data$calories_burned, data$workout_type, shapiro.test)
+shapiro_results
+
+#Levene's Test
+levene_test <- leveneTest(calories_burned ~ workout_type, data = data)
+levene_test
+
+```
+
+
+
+
+```{r}
+# Kruskal-Wallis Test
+kruskal_result <- kruskal.test(calories_burned ~ workout_type, data = data)
+kruskal_result
+
+```
+
+```{r}
+boxplot(calories_burned ~ workout_type, data = data,
+        main = "Calories Burned by Workout Type",
+        xlab = "Workout Type",
+        ylab = "Calories Burned",
+        col = c("lightblue", "lightgreen", "lightpink", "lightyellow"))
+
+
+points(1:length(levels(data$workout_type)),
+       tapply(data$calories_burned, data$workout_type, median),
+       col = "red", pch = 19)
+
+```
+
+
+
+
+
+```{r}
+#Q12
+#Two-Way ANOVA
+# Create a new group column (combined factors)
+data$group <- interaction(data$workout_type, data$gender)
+
+shapiro_results <- by(data$calories_burned, data$group, shapiro.test)
+sapply(shapiro_results, function(x) x$p.value)
+
+
+```
+
+```{r}
+library(car)
+leveneTest(calories_burned ~ workout_type * gender, data = data)
+
+```
+
+
+```{r}
+# Ensure factor variables
+data$gender <- as.factor(data$gender)
+data$workout_type <- as.factor(data$workout_type)
+
+# Two-Way ANOVA
+two_way_result <- aov(calories_burned ~ workout_type * gender, data = data)
+summary(two_way_result)
+
+```
+
+
+```{r}
+boxplot(calories_burned ~ group, data = data,
+        main = "Calories Burned by Workout Type & Gender",
+        xlab = "Workout Type x Gender", ylab = "Calories Burned",
+        col = rainbow(length(unique(data$group))), las = 2)
+
+# Add the median point of the group
+points(1:length(unique(data$group)),
+       tapply(data$calories_burned, data$group, median),
+       col = "red", pch = 19)
+
+```
+
+```{r}
+#Post hoc analysis using Tukey's HSD
+tukey_result_1 <- TukeyHSD(two_way_result, which = "workout_type")
+tukey_result_1  
+
+
+tukey_result_2 <- TukeyHSD(two_way_result, which = "gender")
+tukey_result_2  
+
+#0 betwen lwr and upr / p-value > 0.05 : no significane difference  
+#0 not betwen lwr and upr / p-value < 0.05 : significane difference  
+```
+
+
+
+```{r}
+#Q13
+#Multiple Linear Regression Model
+
+library(ggplot2)
+library(car)         # for VIF
+library(dplyr)
+
+# Ensure gender is a factor
+data$gender <- as.factor(data$gender)
+
+
+# Build the multiple linear regression model
+model <- lm(calories_burned ~ age + gender + weight_kg + avg_bpm +
+             session_duration_hours + fat_percentage + water_intake_liters, data = data)
+
+summary(model)
+
+```
+
+
+```{r}
+set.seed(123)  # for reproducibility
+#install.packages('caret')
+library(caret)
+
+# Split the data: 80% training, 20% testing
+train_index <- createDataPartition(data$calories_burned, p = 0.8, list = FALSE)
+train_data <- data[train_index, ]
+test_data <- data[-train_index, ]
+
+
+# Fit model on training data (using only significant variables)
+model_reduced <- lm(calories_burned ~ age + gender + avg_bpm + session_duration_hours, data = train_data)
+
+```
+
+
+
+
+
+
+```{r}
+#Model Diagnostics
+#Step 1: Residual Plot
+plot(model_reduced$fitted.values, model_reduced$residuals,
+     xlab = "Fitted Values",
+     ylab = "Residuals",
+     main = "Residuals vs Fitted Values")
+abline(h = 0, col = "red", lwd = 2)
+
+
+```
+
+
+```{r}
+#Step 2: Q-Q Plot
+# Q-Q Plot
+qqnorm(model_reduced$residuals, main = "Q-Q Plot of Residuals")
+qqline(model_reduced$residuals, col = "red", lwd = 2)
+
+```
+
+```{r}
+#Step 3: Check for Multicollinearity using pairs scatter plot and correlation matrix
+
+num_vars <- data[, c("age", "avg_bpm", "session_duration_hours")]
+
+# 1. Pairwise scatter plot matrix
+pairs(num_vars, main = "Scatterplot Matrix of Predictors")
+
+# 2. Correlation Matrix 
+cor_matrix <- cor(num_vars)
+
+# install.packages("corrplot")
+library(corrplot)
+
+corrplot(cor_matrix, method = "color", addCoef.col = "red", 
+         tl.cex = 0.8, number.cex = 0.8,
+         title = "Correlation Matrix of Numeric Predictors", 
+         mar = c(0,0,2,0))
+
+```
+
+
+
+
+
+```{r}
+#Step 3: Check for Multicollinearity using VIF
+vif_values <- vif(model_reduced)
+print(vif_values)
+ 
+```
+
+```{r}
+#Step 4: Cook’s Distance
+cooksD <- cooks.distance(model_reduced)
+
+plot(cooksD, type = "h", main = "Cook's Distance", 
+     ylab = "Cook's Distance", xlab = "Observation Index")
+abline(h = 4/length(cooksD), col = "red", lty = 2)
+
+# Identify influential points 
+influential_points <- which(cooksD > 4 / length(cooksD))
+print(influential_points)
+
+```
+```{r}
+summary(model_reduced)
+```
+
+
+```{r}
+# only select numeric variable
+predictors <- data[, c("age", "avg_bpm", "session_duration_hours")]
+
+scaled_predictors <- as.data.frame(scale(predictors))
+
+scaled_predictors$gender <- data$gender
+scaled_predictors$calories_burned <- data$calories_burned
+
+scaled_predictors
+
+```
+
+
+```{r}
+#fit model
+model_scaled_reduced <- lm(calories_burned ~ age + gender + avg_bpm + session_duration_hours, data = scaled_predictors)
+summary(model_scaled_reduced)
+
+```
+```{r}
+anova(model_scaled_reduced)
+```
+
+
+
+
+```{r}
+# Predict on test set
+predictions <- predict(model_reduced, newdata = test_data)
+
+# Evaluate performance: RMSE and R-squared
+rmse <- sqrt(mean((test_data$calories_burned - predictions)^2))
+rsq <- cor(test_data$calories_burned, predictions)^2
+
+cat("Test RMSE:", rmse, "\n")
+cat("Test R-squared:", rsq, "\n")
+```
+
+```{r}
+new_data <- test_data[1:3, ]
+
+# Confidence interval
+conf_int <- predict(model_reduced, newdata = new_data, interval = "confidence")
+
+# Prediction interval
+pred_int <- predict(model_reduced, newdata = new_data, interval = "prediction")
+
+cbind(new_data$calories_burned, conf_int, pred_int[, 2:3])
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
